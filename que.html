@@ -172,6 +172,7 @@
     state.attempt++;
     // re-render only incorrect remain (and shuffle their options)
     render();
+hint();
 
     exp.forEach(e=>{
       e.addEventListener('click',()=>{
@@ -188,10 +189,12 @@
     state.attempt = 0;
     document.querySelectorAll(".explain").forEach(e=>e.classList.add("hidden"));
     render();
+hint();
   }
 
   function reshuffle(){
-    render(); // render()가 항상 보기 순서를 다시 섞음
+    render();
+hint(); // render()가 항상 보기 순서를 다시 섞음
   }
 
   async function init(){
@@ -210,11 +213,15 @@
     }));
     statusEl.textContent = `총 ${state.items.length}문제 로드 완료`;
     render();
+hint();
 
-    const exp = document.querySelectorAll('.exp');
+  }
 
-    exp.forEach(e=>{
-      e.addEventListener('click',()=>{
+
+  const hint=()=>{
+        const exp = document.querySelectorAll('.exp');
+        exp.forEach(e=>{
+        e.addEventListener('click',()=>{
         let onon = e.parentElement.parentElement;
 
         onon.querySelector('.explain').classList.contains('hidden')?onon.querySelector('.explain').classList.remove('hidden'):onon.querySelector('.explain').className += ' hidden';
