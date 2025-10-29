@@ -1,0 +1,851 @@
+{
+  "setName": "SQLD 연습 세트 (실전 난이도·유사문항 65문항)",
+  "version": "2025-10-28",
+  "questions": [
+    {
+      "id": "Q01",
+      "topic": "윈도우함수/TOP-N",
+      "question": "각 카테고리(cat)별로 매출이 높은 상위 1개 상품을 구하려면 가장 적절한 방법은?",
+      "choices": [
+        {"k":"A","v":"GROUP BY cat, 상품 ORDER BY 매출 DESC LIMIT 1"},
+        {"k":"B","v":"ROW_NUMBER() OVER(PARTITION BY cat ORDER BY 매출 DESC)=1 조건으로 필터"},
+        {"k":"C","v":"MAX(매출)로 GROUP BY cat만 계산 후 원본과 NATURAL JOIN"},
+        {"k":"D","v":"DISTINCT cat, 상품 WHERE 매출 = (SELECT MAX(매출) FROM ...)"}
+      ],
+      "answerKey": "B",
+      "explanation": "카테고리별 TOP-N은 PARTITION BY + 윈도우 순위(ROW_NUMBER/RANK) 조합이 표준적."
+    },
+    {
+      "id": "Q02",
+      "topic": "PIVOT/UNPIVOT",
+      "question": "월별 합계(월=컬럼, 합계=셀)로 넓게(PIVOT) 펼친 표를 다시 세로(Long) 형태로 바꾸려면?",
+      "choices": [
+        {"k":"A","v":"UNION ALL"},
+        {"k":"B","v":"UNPIVOT으로 월 컬럼들을 (key,value) 쌍으로 변환"},
+        {"k":"C","v":"CUBE/ROLLUP"},
+        {"k":"D","v":"LISTAGG"}
+      ],
+      "answerKey": "B",
+      "explanation": "가로 확장된 교차표→세로 변환은 UNPIVOT이 정석."
+    },
+    {
+      "id": "Q03",
+      "topic": "REGEXP",
+      "question": "전화번호 형식 '010-1234-5678' 여부를 검사하는 가장 알맞은 함수는?",
+      "choices": [
+        {"k":"A","v":"LIKE '010-____-____'"},
+        {"k":"B","v":"REGEXP_LIKE(col, '^010-\\d{4}-\\d{4}$')"},
+        {"k":"C","v":"INSTR(col, '010-') = 1"},
+        {"k":"D","v":"REGEXP_REPLACE(col, '-', '')"}
+      ],
+      "answerKey": "B",
+      "explanation": "정규식 패턴 검증은 REGEXP_LIKE가 적합(앵커/수량자 활용)."
+    },
+    {
+      "id": "Q04",
+      "topic": "그룹함수/HAVING",
+      "question": "부서별 매출 합계가 1억 이상인 부서만 조회하는 올바른 구문은?",
+      "choices": [
+        {"k":"A","v":"WHERE SUM(sales) >= 100000000 GROUP BY dept"},
+        {"k":"B","v":"GROUP BY dept WHERE SUM(sales) >= 100000000"},
+        {"k":"C","v":"GROUP BY dept HAVING SUM(sales) >= 100000000"},
+        {"k":"D","v":"HAVING SUM(sales) >= 100000000 GROUP BY dept"}
+      ],
+      "answerKey": "C",
+      "explanation": "집계 결과 필터는 HAVING에서 처리."
+    },
+    {
+      "id": "Q05",
+      "topic": "JOIN",
+      "question": "A에는 모든 상품, B에는 일부 상품의 프로모션 정보가 있을 때 모든 상품을 유지하며 프로모션을 매칭하려면?",
+      "choices": [
+        {"k":"A","v":"INNER JOIN"},
+        {"k":"B","v":"LEFT OUTER JOIN"},
+        {"k":"C","v":"RIGHT OUTER JOIN"},
+        {"k":"D","v":"FULL OUTER JOIN"}
+      ],
+      "answerKey": "B",
+      "explanation": "A를 기준으로 모두 유지하므로 LEFT OUTER JOIN."
+    },
+    {
+      "id": "Q06",
+      "topic": "NULL 처리",
+      "question": "합계 계산에서 NULL을 0으로 간주하려면 가장 간결한 표현은?",
+      "choices": [
+        {"k":"A","v":"CASE WHEN col IS NULL THEN 0 ELSE col END"},
+        {"k":"B","v":"NVL(col,0) 또는 COALESCE(col,0)"},
+        {"k":"C","v":"DECODE(col,NULL,0,col)"},
+        {"k":"D","v":"ABS(col)"}
+      ],
+      "answerKey": "B",
+      "explanation": "표준은 COALESCE, 오라클 전용은 NVL."
+    },
+    {
+      "id": "Q07",
+      "topic": "윈도우함수",
+      "question": "주차별 누적 매출을 구하는 가장 적절한 윈도우 프레임은?",
+      "choices": [
+        {"k":"A","v":"SUM(sales) OVER(ORDER BY week ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"},
+        {"k":"B","v":"SUM(sales) OVER(PARTITION BY week)"},
+        {"k":"C","v":"SUM(sales) OVER()"},
+        {"k":"D","v":"SUM(sales) OVER(ORDER BY week ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)"}
+      ],
+      "answerKey": "A",
+      "explanation": "누적은 시작행~현재행 프레임을 사용."
+    },
+    {
+      "id": "Q08",
+      "topic": "모델링/정규화",
+      "question": "제3정규형(3NF)의 정의에 가장 부합하는 것은?",
+      "choices": [
+        {"k":"A","v":"모든 속성이 기본키에 완전 함수 종속이며, 이행적 종속이 없다"},
+        {"k":"B","v":"부분 함수 종속을 허용한다"},
+        {"k":"C","v":"반정규화된 구조를 의미한다"},
+        {"k":"D","v":"기본키가 두 개 이상일 때만 적용된다"}
+      ],
+      "answerKey": "A",
+      "explanation": "3NF는 비키 속성의 이행 종속 제거가 핵심."
+    },
+    {
+      "id": "Q09",
+      "topic": "인덱스/성능",
+      "question": "복합 인덱스 IDX(col1,col2)가 있을 때 다음 중 일반적으로 가장 유리한 조건절은?",
+      "choices": [
+        {"k":"A","v":"WHERE col2 = ?"},
+        {"k":"B","v":"WHERE col1 = ? AND col2 = ?"},
+        {"k":"C","v":"WHERE col2 BETWEEN ? AND ?"},
+        {"k":"D","v":"WHERE col1 LIKE '%값%'"}
+      ],
+      "answerKey": "B",
+      "explanation": "리딩 컬럼(col1)을 활용하고 후속 컬럼과 결합하면 선택도가 높음."
+    },
+    {
+      "id": "Q10",
+      "topic": "집계+LIMIT",
+      "question": "카테고리별로 상품 수가 가장 많은 카테고리를 1개만 출력하려면?",
+      "choices": [
+        {"k":"A","v":"COUNT(*) DESC로 정렬 후 FETCH FIRST 1 ROW ONLY"},
+        {"k":"B","v":"MAX(COUNT(*))"},
+        {"k":"C","v":"GROUP BY 없이 COUNT(*)"},
+        {"k":"D","v":"HAVING COUNT(*) = 1"}
+      ],
+      "answerKey": "A",
+      "explanation": "집계→정렬→상위 1개 제한(FETCH FIRST / LIMIT)."
+    },
+    {
+      "id": "Q11",
+      "topic": "트랜잭션",
+      "question": "다중 DML 후 일부만 반영하고 나머지를 취소하려면 적절한 조합은?",
+      "choices": [
+        {"k":"A","v":"SAVEPOINT 설정 후 ROLLBACK TO SAVEPOINT"},
+        {"k":"B","v":"COMMIT 후 ROLLBACK"},
+        {"k":"C","v":"ALTER SESSION SET AUTOCOMMIT ON"},
+        {"k":"D","v":"GRANT 이후 REVOKE"}
+      ],
+      "answerKey": "A",
+      "explanation": "부분 취소는 SAVEPOINT + ROLLBACK TO로 구현."
+    },
+    {
+      "id": "Q12",
+      "topic": "무결성/제약조건",
+      "question": "자식 테이블에서 참조 무결성을 보장하려면 적절한 제약은?",
+      "choices": [
+        {"k":"A","v":"CHECK"},
+        {"k":"B","v":"UNIQUE"},
+        {"k":"C","v":"FOREIGN KEY"},
+        {"k":"D","v":"NOT NULL"}
+      ],
+      "answerKey": "C",
+      "explanation": "부모-자식 관계의 참조 무결성은 FK로 보증."
+    },
+    {
+      "id": "Q13",
+      "topic": "데이터모델/이상현상",
+      "question": "삽입 이상, 삭제 이상, 갱신 이상을 줄이는 기본 원칙은?",
+      "choices": [
+        {"k":"A","v":"반정규화"},
+        {"k":"B","v":"정규화"},
+        {"k":"C","v":"중복 허용"},
+        {"k":"D","v":"뷰 생성"}
+      ],
+      "answerKey": "B",
+      "explanation": "정규화로 함수 종속을 정리하여 이상현상 최소화."
+    },
+    {
+      "id": "Q14",
+      "topic": "날짜함수",
+      "question": "월말(last day)을 구하는 표준적 접근은?",
+      "choices": [
+        {"k":"A","v":"DATE_TRUNC('month', d) + INTERVAL '30 day'"},
+        {"k":"B","v":"ADD_MONTHS(TRUNC(d,'MM'),1)-1 (Oracle 계열)"},
+        {"k":"C","v":"d + 30"},
+        {"k":"D","v":"EXTRACT(DAY FROM d)"}
+      ],
+      "answerKey": "B",
+      "explanation": "오라클 계열에서 월초→한달 더함→하루 빼기 패턴이 일반적."
+    },
+    {
+      "id": "Q15",
+      "topic": "서브쿼리/EXISTS",
+      "question": "서브쿼리 결과 존재 여부만 중요할 때 성능상 유리한 조건은?",
+      "choices": [
+        {"k":"A","v":"IN (SELECT ...)"},
+        {"k":"B","v":"EXISTS (SELECT 1 FROM ... WHERE ...)"},
+        {"k":"C","v":"= (SELECT ...)"},
+        {"k":"D","v":"NOT IN (SELECT ...)"}
+      ],
+      "answerKey": "B",
+      "explanation": "존재 여부는 EXISTS가 계획상 유리한 경우가 많음."
+    },
+    {
+      "id": "Q16",
+      "topic": "집계함수",
+      "question": "NULL을 포함한 평균을 올바르게 계산하려면?",
+      "choices": [
+        {"k":"A","v":"AVG(col) — NULL은 자동 제외"},
+        {"k":"B","v":"SUM(col)/COUNT(*)"},
+        {"k":"C","v":"SUM(NVL(col,0))/COUNT(*)"},
+        {"k":"D","v":"COUNT(col)/SUM(*)"}
+      ],
+      "answerKey": "A",
+      "explanation": "AVG는 NULL을 제외하여 평균 계산."
+    },
+    {
+      "id": "Q17",
+      "topic": "인덱스/LIKE",
+      "question": "인덱스 컬럼에 LIKE '%키워드'를 사용했을 때 일반적으로 기대되는 것은?",
+      "choices": [
+        {"k":"A","v":"인덱스 범위 스캔"},
+        {"k":"B","v":"인덱스 사용 불가 가능성(선두 와일드카드)"},
+        {"k":"C","v":"유니크 스캔"},
+        {"k":"D","v":"풀 인덱스 스캔만 가능"}
+      ],
+      "answerKey": "B",
+      "explanation": "선두 '%'는 인덱스 선두 일치 조건을 깨 인덱스 활용 저하."
+    },
+    {
+      "id": "Q18",
+      "topic": "DML/RETURNING",
+      "question": "INSERT 후 생성된 키 값을 즉시 받으려면(오라클) 가장 간결한 방법은?",
+      "choices": [
+        {"k":"A","v":"SELECT MAX(id) FROM 테이블"},
+        {"k":"B","v":"INSERT ... RETURNING id INTO :변수"},
+        {"k":"C","v":"COMMIT 후 SELECT"},
+        {"k":"D","v":"MERGE 사용"}
+      ],
+      "answerKey": "B",
+      "explanation": "오라클은 RETURNING INTO로 DML 결과 값을 즉시 반환."
+    },
+    {
+      "id": "Q19",
+      "topic": "MERGE",
+      "question": "키 기준으로 존재하면 UPDATE, 없으면 INSERT 하는 DML은?",
+      "choices": [
+        {"k":"A","v":"UPSERT"},
+        {"k":"B","v":"MERGE"},
+        {"k":"C","v":"REPLACE"},
+        {"k":"D","v":"INSERT APPEND"}
+      ],
+      "answerKey": "B",
+      "explanation": "오라클/표준 문법에서 MERGE가 존재/부재 분기 처리."
+    },
+    {
+      "id": "Q20",
+      "topic": "집계/ROLLUP",
+      "question": "부서-직무 계층으로 소계와 총계를 함께 보려면?",
+      "choices": [
+        {"k":"A","v":"GROUP BY ROLLUP(dept, job)"},
+        {"k":"B","v":"GROUP BY CUBE(dept, job)"},
+        {"k":"C","v":"GROUP BY GROUPING SETS (dept, job)"},
+        {"k":"D","v":"GROUP BY dept, job"}
+      ],
+      "answerKey": "A",
+      "explanation": "ROLLUP은 계층적 소계→총계 집계에 적합."
+    },
+    {
+      "id": "Q21",
+      "topic": "집합연산",
+      "question": "두 질의의 결과에서 공통행만 필요할 때 사용하는 집합 연산은?",
+      "choices": [
+        {"k":"A","v":"UNION"},
+        {"k":"B","v":"UNION ALL"},
+        {"k":"C","v":"INTERSECT"},
+        {"k":"D","v":"MINUS/EXCEPT"}
+      ],
+      "answerKey": "C",
+      "explanation": "교집합은 INTERSECT."
+    },
+    {
+      "id": "Q22",
+      "topic": "서브쿼리/NOT IN",
+      "question": "NULL이 포함될 수 있는 서브쿼리에서 제외 조건을 안전하게 쓰려면?",
+      "choices": [
+        {"k":"A","v":"NOT IN (SELECT ...)"},
+        {"k":"B","v":"NOT EXISTS (상관쿼리)"},
+        {"k":"C","v":"<> ALL (SELECT ...)"},
+        {"k":"D","v":"IN (SELECT ... WHERE col IS NOT NULL)"}
+      ],
+      "answerKey": "B",
+      "explanation": "NOT IN은 NULL 존재 시 3값 논리로 전체 FALSE가 될 수 있어 위험."
+    },
+    {
+      "id": "Q23",
+      "topic": "윈도우함수/RANK",
+      "question": "동점(동일 매출)이 있을 때 1,1,3처럼 순위를 매기려면?",
+      "choices": [
+        {"k":"A","v":"ROW_NUMBER()"},
+        {"k":"B","v":"RANK()"},
+        {"k":"C","v":"DENSE_RANK()"},
+        {"k":"D","v":"NTILE(3)"}
+      ],
+      "answerKey": "B",
+      "explanation": "RANK는 동점 후순위를 건너뛰며(DENSE_RANK는 건너뛰지 않음)."
+    },
+    {
+      "id": "Q24",
+      "topic": "윈도우함수/DENSE_RANK",
+      "question": "동점 시 1,1,2처럼 연속 등수를 원하면?",
+      "choices": [
+        {"k":"A","v":"ROW_NUMBER()"},
+        {"k":"B","v":"RANK()"},
+        {"k":"C","v":"DENSE_RANK()"},
+        {"k":"D","v":"CUME_DIST()"}
+      ],
+      "answerKey": "C",
+      "explanation": "DENSE_RANK는 동점 다음 등수를 건너뛰지 않음."
+    },
+    {
+      "id": "Q25",
+      "topic": "EXECUTION PLAN",
+      "question": "선택도가 낮은(=많은 행이 일치) 조건에 인덱스를 무조건 추가하면?",
+      "choices": [
+        {"k":"A","v":"항상 성능 개선"},
+        {"k":"B","v":"풀스캔보다 느려질 수 있음"},
+        {"k":"C","v":"카디널리티가 1이 됨"},
+        {"k":"D","v":"정렬이 불필요해짐"}
+      ],
+      "answerKey": "B",
+      "explanation": "선택도 낮으면 인덱스보다 풀스캔이 유리한 경우가 많음."
+    },
+    {
+      "id": "Q26",
+      "topic": "DCL",
+      "question": "다른 사용자에게 테이블 조회 권한을 주는 명령은?",
+      "choices": [
+        {"k":"A","v":"GRANT SELECT ON 테이블 TO 사용자"},
+        {"k":"B","v":"REVOKE SELECT FROM 사용자"},
+        {"k":"C","v":"GRANT EXECUTE"},
+        {"k":"D","v":"ALTER USER"}
+      ],
+      "answerKey": "A",
+      "explanation": "권한 부여는 GRANT."
+    },
+    {
+      "id": "Q27",
+      "topic": "뷰(View)",
+      "question": "뷰를 통해 데이터 접근을 제한하고자 할 때 유의할 점은?",
+      "choices": [
+        {"k":"A","v":"뷰는 항상 성능 향상을 보장한다"},
+        {"k":"B","v":"DML 가능 여부는 뷰 정의에 따라 제한될 수 있다"},
+        {"k":"C","v":"뷰는 스냅샷과 동일하다"},
+        {"k":"D","v":"뷰는 저장공간을 많이 차지한다"}
+      ],
+      "answerKey": "B",
+      "explanation": "복잡 뷰는 DML 제한 가능(조인, 집계 포함 등)."
+    },
+    {
+      "id": "Q28",
+      "topic": "CASE/DECODE",
+      "question": "조건에 따라 값을 치환할 때 ANSI 표준 방식은?",
+      "choices": [
+        {"k":"A","v":"DECODE"},
+        {"k":"B","v":"CASE WHEN ... THEN ... END"},
+        {"k":"C","v":"IF ... ELSE"},
+        {"k":"D","v":"GOTO"}
+      ],
+      "answerKey": "B",
+      "explanation": "CASE가 ANSI 표준(Oracle DECODE는 전용)."
+    },
+    {
+      "id": "Q29",
+      "topic": "집계/중복제거",
+      "question": "고객 수(중복 고객 제외)를 구하는 가장 간결한 집계는?",
+      "choices": [
+        {"k":"A","v":"COUNT(*)"},
+        {"k":"B","v":"COUNT(고객ID)"},
+        {"k":"C","v":"COUNT(DISTINCT 고객ID)"},
+        {"k":"D","v":"SUM(DISTINCT 고객ID)"}
+      ],
+      "answerKey": "C",
+      "explanation": "고유 고객 수는 COUNT(DISTINCT)."
+    },
+    {
+      "id": "Q30",
+      "topic": "JOIN/USING",
+      "question": "두 테이블에 동일한 컬럼명이 있고 그 컬럼으로 조인할 때 간결한 구문은?",
+      "choices": [
+        {"k":"A","v":"... ON A.id = B.id"},
+        {"k":"B","v":"... USING(id)"},
+        {"k":"C","v":"... WHERE A.id = B.id"},
+        {"k":"D","v":"NATURAL JOIN"}
+      ],
+      "answerKey": "B",
+      "explanation": "동일 컬럼명 조인은 USING이 간결(표준)."
+    },
+    {
+      "id": "Q31",
+      "topic": "서브쿼리/상관",
+      "question": "상관 서브쿼리는 언제 평가되는가?",
+      "choices": [
+        {"k":"A","v":"메인 쿼리 실행 전 1회"},
+        {"k":"B","v":"메인 쿼리의 각 행마다"},
+        {"k":"C","v":"COMMIT 시점마다"},
+        {"k":"D","v":"인덱스 생성 시"}
+      ],
+      "answerKey": "B",
+      "explanation": "외부 행 값에 의존하므로 행마다 재평가."
+    },
+    {
+      "id": "Q32",
+      "topic": "DISTINCT vs GROUP BY",
+      "question": "중복 제거만 목적일 때 두 방법의 차이에 대한 옳은 설명은?",
+      "choices": [
+        {"k":"A","v":"항상 GROUP BY가 DISTINCT보다 빠르다"},
+        {"k":"B","v":"항상 DISTINCT가 GROUP BY보다 빠르다"},
+        {"k":"C","v":"RDBMS/실행계획에 따라 유사하며 케이스별 상이"},
+        {"k":"D","v":"둘 다 집계 결과를 변경한다"}
+      ],
+      "answerKey": "C",
+      "explanation": "엔진/데이터 특성에 따라 성능이 달라질 수 있음."
+    },
+    {
+      "id": "Q33",
+      "topic": "NULL/비교",
+      "question": "WHERE col <> 10 조건에서 col이 NULL이면?",
+      "choices": [
+        {"k":"A","v":"참"},
+        {"k":"B","v":"거짓"},
+        {"k":"C","v":"UNKNOWN(필터 아웃)"},
+        {"k":"D","v":"오류"}
+      ],
+      "answerKey": "C",
+      "explanation": "NULL 비교는 3값 논리로 UNKNOWN."
+    },
+    {
+      "id": "Q34",
+      "topic": "인덱스/함수적",
+      "question": "함수 적용된 컬럼 조건(예: WHERE LOWER(name)='kim')의 인덱스 활용을 개선하려면?",
+      "choices": [
+        {"k":"A","v":"함수 기반 인덱스 생성"},
+        {"k":"B","v":"FULL SCAN 힌트"},
+        {"k":"C","v":"PARALLEL 힌트"},
+        {"k":"D","v":"ANALYZE TABLE"}
+      ],
+      "answerKey": "A",
+      "explanation": "함수 기반 인덱스가 대표적 해결책."
+    },
+    {
+      "id": "Q35",
+      "topic": "PIVOT",
+      "question": "행 데이터를 월 컬럼으로 가로 확장하려면?",
+      "choices": [
+        {"k":"A","v":"PIVOT"},
+        {"k":"B","v":"UNPIVOT"},
+        {"k":"C","v":"ROLLUP"},
+        {"k":"D","v":"CUBE"}
+      ],
+      "answerKey": "A",
+      "explanation": "세로→가로는 PIVOT."
+    },
+    {
+      "id": "Q36",
+      "topic": "윈도우함수/비율",
+      "question": "전체 대비 매출 비중을 구하는 함수 조합은?",
+      "choices": [
+        {"k":"A","v":"SUM(sales)/SUM(sales)"},
+        {"k":"B","v":"SUM(sales) / SUM(SUM(sales)) OVER()"},
+        {"k":"C","v":"AVG(sales)/COUNT(*)"},
+        {"k":"D","v":"CUME_DIST()"}
+      ],
+      "answerKey": "B",
+      "explanation": "분자는 그룹 합, 분모는 OVER() 총합."
+    },
+    {
+      "id": "Q37",
+      "topic": "집계/조건부 집계",
+      "question": "남성 고객 매출 합만 구하려면 가장 간결한 표현은?",
+      "choices": [
+        {"k":"A","v":"SUM(CASE WHEN gender='M' THEN sales ELSE 0 END)"},
+        {"k":"B","v":"COUNT(CASE WHEN gender='M' THEN sales END)"},
+        {"k":"C","v":"AVG(CASE WHEN gender='M' THEN sales END)"},
+        {"k":"D","v":"SUM(sales) WHERE gender='M'"}
+      ],
+      "answerKey": "A",
+      "explanation": "조건부 합계는 CASE로 0 대체 후 SUM."
+    },
+    {
+      "id": "Q38",
+      "topic": "정규화/키",
+      "question": "후보키가 여러 개인 경우 기본키를 선택하는 기준으로 적절한 것은?",
+      "choices": [
+        {"k":"A","v":"값이 자주 변하는 속성"},
+        {"k":"B","v":"최소성·안정성·간결성"},
+        {"k":"C","v":"가장 긴 텍스트"},
+        {"k":"D","v":"외부 시스템 의존 컬럼"}
+      ],
+      "answerKey": "B",
+      "explanation": "PK는 변동 적고 짧고 의미가 적은 컬럼이 선호."
+    },
+    {
+      "id": "Q39",
+      "topic": "DDL/제약조건",
+      "question": "이미 데이터가 있는 테이블에 NOT NULL 제약을 추가하려면?",
+      "choices": [
+        {"k":"A","v":"ALTER TABLE ... MODIFY col NOT NULL"},
+        {"k":"B","v":"ALTER TABLE ... ADD CONSTRAINT CHECK(col IS NOT NULL)"},
+        {"k":"C","v":"ALTER SESSION SET CONSTRAINTS=DEFERRED"},
+        {"k":"D","v":"CREATE INDEX ON col"}
+      ],
+      "answerKey": "A",
+      "explanation": "컬럼 속성 변경으로 NOT NULL 부여."
+    },
+    {
+      "id": "Q40",
+      "topic": "JOIN/ANTI JOIN",
+      "question": "A에는 있고 B에는 없는 키를 찾으려면?",
+      "choices": [
+        {"k":"A","v":"A LEFT JOIN B ON ... WHERE B.key IS NULL"},
+        {"k":"B","v":"A INNER JOIN B ON ..."},
+        {"k":"C","v":"A FULL JOIN B WHERE A.key IS NULL"},
+        {"k":"D","v":"A CROSS JOIN B"}
+      ],
+      "answerKey": "A",
+      "explanation": "LEFT JOIN + IS NULL이 전형적 anti join."
+    },
+    {
+      "id": "Q41",
+      "topic": "서브쿼리/스칼라",
+      "question": "스칼라 서브쿼리에 대한 설명으로 옳은 것은?",
+      "choices": [
+        {"k":"A","v":"행 여러 개 반환 가능"},
+        {"k":"B","v":"정확히 1행 1열을 반환해야 한다"},
+        {"k":"C","v":"DML 전용"},
+        {"k":"D","v":"FROM 절에서만 사용"}
+      ],
+      "answerKey": "B",
+      "explanation": "스칼라 서브쿼리는 1×1 반환이 전제."
+    },
+    {
+      "id": "Q42",
+      "topic": "윈도우함수/LAG-LEAD",
+      "question": "전주 대비 증감을 구하려면 적절한 함수는?",
+      "choices": [
+        {"k":"A","v":"RANK"},
+        {"k":"B","v":"LAG"},
+        {"k":"C","v":"NTILE"},
+        {"k":"D","v":"CUME_DIST"}
+      ],
+      "answerKey": "B",
+      "explanation": "이전 행 값을 참조하는 LAG 사용."
+    },
+    {
+      "id": "Q43",
+      "topic": "인덱스/정렬",
+      "question": "ORDER BY col1, col2를 자주 사용할 때 성능 개선 방법으로 적절한 것은?",
+      "choices": [
+        {"k":"A","v":"IDX(col2,col1) 생성"},
+        {"k":"B","v":"IDX(col1,col2) 생성"},
+        {"k":"C","v":"IDX(col1)만 생성"},
+        {"k":"D","v":"FULL SCAN 강제"}
+      ],
+      "answerKey": "B",
+      "explanation": "정렬/조회 순서에 맞춘 복합 인덱스가 유리."
+    },
+    {
+      "id": "Q44",
+      "topic": "집계/중첩",
+      "question": "부서별 평균 급여의 전체 평균을 구하려면?",
+      "choices": [
+        {"k":"A","v":"AVG(SUM(sal))"},
+        {"k":"B","v":"AVG(AVG(sal)) OVER()"},
+        {"k":"C","v":"SELECT AVG(avg_sal) FROM (SELECT AVG(sal) avg_sal FROM emp GROUP BY dept)"},
+        {"k":"D","v":"SUM(AVG(sal))"}
+      ],
+      "answerKey": "C",
+      "explanation": "그룹 평균을 서브쿼리로 구한 뒤 바깥에서 다시 평균."
+    },
+    {
+      "id": "Q45",
+      "topic": "트랜잭션/격리",
+      "question": "Dirty Read를 허용하는 격리 수준은?",
+      "choices": [
+        {"k":"A","v":"READ UNCOMMITTED"},
+        {"k":"B","v":"READ COMMITTED"},
+        {"k":"C","v":"REPEATABLE READ"},
+        {"k":"D","v":"SERIALIZABLE"}
+      ],
+      "answerKey": "A",
+      "explanation": "Dirty Read는 READ UNCOMMITTED에서만 가능."
+    },
+    {
+      "id": "Q46",
+      "topic": "DATE/TRUNC",
+      "question": "일자 기준으로 일별 집계를 하려면 우선 적용할 만한 전처리는?",
+      "choices": [
+        {"k":"A","v":"TO_CHAR(date,'YYYYMMDD')로 변환 후 GROUP BY"},
+        {"k":"B","v":"TRUNC(date)로 시간 제거 후 GROUP BY"},
+        {"k":"C","v":"ROUND(date)"},
+        {"k":"D","v":"TO_DATE(date)"}
+      ],
+      "answerKey": "B",
+      "explanation": "시간 제거를 위해 TRUNC(date) 사용이 일반적."
+    },
+    {
+      "id": "Q47",
+      "topic": "서브쿼리/ANY-ALL",
+      "question": "급여가 부서 10의 모든 사원 급여보다 큰 사원을 찾는 조건은?",
+      "choices": [
+        {"k":"A","v":"> ANY (SELECT sal FROM emp WHERE dept=10)"},
+        {"k":"B","v":"> ALL (SELECT sal FROM emp WHERE dept=10)"},
+        {"k":"C","v":"= ANY (SELECT sal FROM emp WHERE dept=10)"},
+        {"k":"D","v":"< ALL (SELECT sal FROM emp WHERE dept=10)"}
+      ],
+      "answerKey": "B",
+      "explanation": "모든 값보다 크다 → > ALL."
+    },
+    {
+      "id": "Q48",
+      "topic": "집합연산/중복",
+      "question": "중복을 허용하면서 결과를 합치려면?",
+      "choices": [
+        {"k":"A","v":"UNION"},
+        {"k":"B","v":"UNION ALL"},
+        {"k":"C","v":"INTERSECT"},
+        {"k":"D","v":"MINUS/EXCEPT"}
+      ],
+      "answerKey": "B",
+      "explanation": "UNION ALL은 중복 제거를 하지 않음."
+    },
+    {
+      "id": "Q49",
+      "topic": "성능/SELECT *",
+      "question": "SELECT * 사용에 대한 올바른 설명은?",
+      "choices": [
+        {"k":"A","v":"항상 최적의 성능"},
+        {"k":"B","v":"네트워크/IO 낭비를 유발할 수 있어 필요한 컬럼만 선택 권장"},
+        {"k":"C","v":"인덱스 사용률 향상"},
+        {"k":"D","v":"실행계획 단순화"}
+      ],
+      "answerKey": "B",
+      "explanation": "불필요 컬럼 전송으로 성능 저하 요인."
+    },
+    {
+      "id": "Q50",
+      "topic": "윈도우함수/NTILE",
+      "question": "매출 기준 사원을 4분위로 나누려면?",
+      "choices": [
+        {"k":"A","v":"RANK() OVER(ORDER BY sales) = 4"},
+        {"k":"B","v":"NTILE(4) OVER(ORDER BY sales)"},
+        {"k":"C","v":"CUME_DIST() OVER(ORDER BY sales)"},
+        {"k":"D","v":"PERCENT_RANK() OVER(ORDER BY sales)"}
+      ],
+      "answerKey": "B",
+      "explanation": "NTILE(n)은 n분위 그룹 번호를 부여."
+    },
+    {
+      "id": "Q51",
+      "topic": "모델링/식별자",
+      "question": "업무 키가 길고 변동 가능할 때 대안으로 적절한 것은?",
+      "choices": [
+        {"k":"A","v":"복합 PK로 그대로 사용"},
+        {"k":"B","v":"대체키(서rogate key) 도입"},
+        {"k":"C","v":"문자열 해시를 PK로"},
+        {"k":"D","v":"업무 키를 TEXT로 통합"}
+      ],
+      "answerKey": "B",
+      "explanation": "안정/간결한 대체키가 관리 용이."
+    },
+    {
+      "id": "Q52",
+      "topic": "인덱스/정렬회피",
+      "question": "ORDER BY가 자주 쓰이는 보고서 쿼리에서 정렬 비용을 줄이려면?",
+      "choices": [
+        {"k":"A","v":"ORDER BY 제거"},
+        {"k":"B","v":"정렬 순서에 맞춘 복합 인덱스 설계"},
+        {"k":"C","v":"데이터 중복 증가"},
+        {"k":"D","v":"뷰로 감싸기"}
+      ],
+      "answerKey": "B",
+      "explanation": "인덱스 정렬을 활용하면 SORT 비용 완화."
+    },
+    {
+      "id": "Q53",
+      "topic": "윈도우함수/가중평균",
+      "question": "가격×수량의 가중 평균 단가를 구하는 올바른 표현은?",
+      "choices": [
+        {"k":"A","v":"AVG(price*qty)"},
+        {"k":"B","v":"SUM(price*qty)/SUM(qty)"},
+        {"k":"C","v":"SUM(price)/SUM(qty)"},
+        {"k":"D","v":"AVG(price)/AVG(qty)"}
+      ],
+      "answerKey": "B",
+      "explanation": "가중 평균은 가중치합/가중치합의 비."
+    },
+    {
+      "id": "Q54",
+      "topic": "집계/조건절위치",
+      "question": "집계 이전에 레코드 필터링을 적용하려면 어디에서 수행해야 하는가?",
+      "choices": [
+        {"k":"A","v":"SELECT"},
+        {"k":"B","v":"WHERE"},
+        {"k":"C","v":"HAVING"},
+        {"k":"D","v":"ORDER BY"}
+      ],
+      "answerKey": "B",
+      "explanation": "원시행 필터는 WHERE, 집계 결과 필터는 HAVING."
+    },
+    {
+      "id": "Q55",
+      "topic": "NULL/COUNT",
+      "question": "COUNT(col)과 COUNT(*)의 차이에 대한 올바른 설명은?",
+      "choices": [
+        {"k":"A","v":"둘 다 NULL을 포함한다"},
+        {"k":"B","v":"COUNT(col)은 NULL 제외, COUNT(*)는 행 개수"},
+        {"k":"C","v":"COUNT(*)는 PK만 센다"},
+        {"k":"D","v":"COUNT(col)은 DISTINCT만 허용"}
+      ],
+      "answerKey": "B",
+      "explanation": "COUNT(*)는 모든 행, COUNT(col)은 NULL 제외."
+    },
+    {
+      "id": "Q56",
+      "topic": "조인/카디널리티",
+      "question": "카디널리티가 높은(값 다양) 컬럼을 조인 키로 사용할 때 일반적 효과는?",
+      "choices": [
+        {"k":"A","v":"선택도 높아 인덱스 효율 증가"},
+        {"k":"B","v":"선택도 낮아 효율 저하"},
+        {"k":"C","v":"항상 해시 조인만 사용"},
+        {"k":"D","v":"항상 중첩 루프 조인만 사용"}
+      ],
+      "answerKey": "A",
+      "explanation": "카디널리티 높으면 인덱스 선택도 개선."
+    },
+    {
+      "id": "Q57",
+      "topic": "윈도우함수/PERCENT_RANK",
+      "question": "백분위 순위를 0~1 사이로 구하는 함수는?",
+      "choices": [
+        {"k":"A","v":"CUME_DIST()"},
+        {"k":"B","v":"PERCENT_RANK()"},
+        {"k":"C","v":"NTILE(100)"},
+        {"k":"D","v":"RANK()/COUNT(*)"}
+      ],
+      "answerKey": "B",
+      "explanation": "PERCENT_RANK는 (rank-1)/(n-1)."
+    },
+    {
+      "id": "Q58",
+      "topic": "UNION vs UNION ALL",
+      "question": "UNION과 UNION ALL의 가장 큰 차이는?",
+      "choices": [
+        {"k":"A","v":"UNION ALL은 정렬 수행"},
+        {"k":"B","v":"UNION은 중복 제거, UNION ALL은 중복 허용"},
+        {"k":"C","v":"UNION만 다중 컬럼 가능"},
+        {"k":"D","v":"UNION ALL은 조인 연산"}
+      ],
+      "answerKey": "B",
+      "explanation": "UNION은 DISTINCT 포함, ALL은 그대로 결합."
+    },
+    {
+      "id": "Q59",
+      "topic": "집계/윈도우 혼합",
+      "question": "그룹별 합계와 전체 합계를 같은 SELECT에서 함께 보려면?",
+      "choices": [
+        {"k":"A","v":"GROUP BY와 윈도우 집계를 혼합 사용"},
+        {"k":"B","v":"두 번의 SELECT만 가능"},
+        {"k":"C","v":"뷰 필수"},
+        {"k":"D","v":"스토어드 프로시저 필요"}
+      ],
+      "answerKey": "A",
+      "explanation": "GROUP BY 결과와 OVER()를 함께 표출 가능."
+    },
+    {
+      "id": "Q60",
+      "topic": "모델링/정규화 vs 반정규화",
+      "question": "조회 빈도가 매우 높고 조인 비용이 큰 컬럼을 중복 보관하는 설계는?",
+      "choices": [
+        {"k":"A","v":"엄격 정규화"},
+        {"k":"B","v":"반정규화(성능 목적)"},
+        {"k":"C","v":"키 정규화"},
+        {"k":"D","v":"BCNF"}
+      ],
+      "answerKey": "B",
+      "explanation": "성능 목적의 중복 허용은 반정규화 전략."
+    },
+    {
+      "id": "Q61",
+      "topic": "인덱스/갱신비용",
+      "question": "INSERT/UPDATE가 매우 많은 테이블에 인덱스를 과다 생성하면?",
+      "choices": [
+        {"k":"A","v":"DML 가속화"},
+        {"k":"B","v":"DML 비용 증가(인덱스 유지 비용)"},
+        {"k":"C","v":"데드락 방지"},
+        {"k":"D","v":"UNDO 생성 감소"}
+      ],
+      "answerKey": "B",
+      "explanation": "인덱스가 많을수록 쓰기 비용과 락 경합 증가 가능."
+    },
+    {
+      "id": "Q62",
+      "topic": "윈도우함수/파트션",
+      "question": "부서별로 입사일 오름차순 순번을 매기려면?",
+      "choices": [
+        {"k":"A","v":"ROW_NUMBER() OVER(ORDER BY hiredate)"},
+        {"k":"B","v":"ROW_NUMBER() OVER(PARTITION BY dept ORDER BY hiredate)"},
+        {"k":"C","v":"RANK() OVER()"},
+        {"k":"D","v":"DENSE_RANK() OVER(PARTITION BY hiredate)"}
+      ],
+      "answerKey": "B",
+      "explanation": "부서 단위 분할 후 정렬 기준으로 순번 부여."
+    },
+    {
+      "id": "Q63",
+      "topic": "서브쿼리/스칼라 다중행 오류",
+      "question": "스칼라 서브쿼리가 다중 행을 반환하면?",
+      "choices": [
+        {"k":"A","v":"자동으로 첫 행만 사용"},
+        {"k":"B","v":"오류: 단일 행 서브쿼리에 다중 행"},
+        {"k":"C","v":"자동으로 집계 수행"},
+        {"k":"D","v":"NULL 반환"}
+      ],
+      "answerKey": "B",
+      "explanation": "1×1이 아니라면 에러."
+    },
+    {
+      "id": "Q64",
+      "topic": "집계/윈도우 프레임",
+      "question": "최근 3개월 이동합(현재 포함)을 구하는 프레임은?",
+      "choices": [
+        {"k":"A","v":"ROWS BETWEEN 2 PRECEDING AND CURRENT ROW"},
+        {"k":"B","v":"ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW"},
+        {"k":"C","v":"RANGE BETWEEN INTERVAL '2' MONTH PRECEDING AND CURRENT ROW"},
+        {"k":"D","v":"ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING"}
+      ],
+      "answerKey": "A",
+      "explanation": "행 기준 최근 3개(현재 포함)면 2 PRECEDING~CURRENT."
+    },
+    {
+      "id": "Q65",
+      "topic": "성능/통계",
+      "question": "비현실적 실행계획이 반복된다면 우선 점검할 사항은?",
+      "choices": [
+        {"k":"A","v":"테이블/인덱스 통계 최신화"},
+        {"k":"B","v":"세션 종료"},
+        {"k":"C","v":"COMMIT 반복"},
+        {"k":"D","v":"권한 재부여"}
+      ],
+      "answerKey": "A",
+      "explanation": "옵티마이저 통계가 오래되면 잘못된 계획을 유발."
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>코드리뷰 방법</title>
+<style>
+  :root{--ink:#0b1320;--muted:#5a6577;--ok:#0b8a3b;--bad:#b00020;--bg:#fafbfe;--card:#fff;--line:#e8ecf3}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,Apple SD Gothic Neo,Segoe UI,Roboto,Apple Color Emoji}
+  header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:16px 12px;z-index:1; display: none;}
+  header h1{margin:0 0 6px;font-size:18px}
+  header .meta{color:var(--muted);font-size:13px}
+  main{max-width:980px;margin:24px auto;padding:0 12px 80px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px;margin:0 0 16px; max-width: 958px; position: fixed; width: 97%; top: 10px; z-index: 2;}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .q{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff; margin-top: 12px;}
+  .q h3{margin:0 0 10px;font-size:16px;display: flex; justify-content: space-between; align-items: center;}
+  .choices{display:grid;gap:8px}
+  .choice{border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;background:#fff}
+  .choice input{margin-right:8px}
+  .choice.correct{border-color:#cfe9d8;background:#f4fbf6}
+  .choice.incorrect{border-color:#f6c7cf;background:#fff4f6}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer; display: flex; flex-shrink: 0;}
+  button.primary{background:#0d47ff;color:#fff;border-color:#0d47ff}
+  button.ghost{background:#fff}
+  .badge{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted)}
+  .explain{margin-top:8px;padding:10px;border-left:3px solid var(--line);background:#f9fbff;color:#2e3a51}
+  .hidden{display:none}
+  .summary{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+  .hr{height:1px;background:var(--line);margin:10px 0}
+  .footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px;display:flex;gap:8px;justify-content:center}
+  .pill{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px}
+  #quiz{margin-top: 150px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>코드리뷰방법</h1>
+  <div class="meta">
+    코드리뷰 및 html 규칙
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="grid">
+      <div>
+        <div class="summary">
+          <span class="pill" id="status">로드 중…</span>
+          <span class="pill">세트: <code id="setName">sqld_set1.json</code></span>
+          <span class="pill" id="progress">0 / 10</span>
+        </div>
+        <div class="hr"></div>
+        <div class="controls">
+          <button id="checkBtn" class="primary">채점하기 / 틀린 문제만 재도전</button>
+          <button id="resetBtn" class="ghost">리셋</button>
+          <button id="reshuffleBtn" class="ghost">보기 재섞기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz"></section>
+</main>
+
+<div class="footer">
+  <span class="badge">gpt기준으로 만들어낸 실제와 비슷한 난이도의 문제입니다.</span>
+</div>
+
+<script>
+(() => {
+  const JSON_FILE = new URLSearchParams(location.search).get("data") || "sqld_set2.json";
+  const QUIZ = document.getElementById("quiz");
+  const statusEl = document.getElementById("status");
+  const progressEl = document.getElementById("progress");
+  const setNameEl = document.getElementById("setName");
+  // const exp = document.querySelector('')
+  setNameEl.textContent = JSON_FILE;
+
+  let questionsRaw = [];
+  let state = {
+    items: [],         
+    correctSet: new Set(),
+    attempt: 0
+  };
+
+  // Fisher-Yates
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function render(){
+    QUIZ.innerHTML = "";
+    const remaining = state.items.filter(q => !state.correctSet.has(q.id));
+    progressEl.textContent = `${state.correctSet.size} / ${state.items.length}`;
+    statusEl.textContent = remaining.length ? `남은 문제 ${remaining.length}개` : "🎉 전부 정답! 리셋 가능";
+
+    if(!remaining.length) return;
+
+    for(const q of remaining){
+      const box = document.createElement("article");
+      box.className = "q";
+      const h = document.createElement("h3");
+      const btn = document.createElement('button');
+      btn.className = 'exp'
+      btn.innerText= '해설보기'
+      h.textContent = `Q${q.no}. ${q.question}`;
+      h.appendChild(btn);
+      box.appendChild(h);
+
+      // choices (reshuffle every render for memory prevention)
+      const shuffledChoices = shuffle(q.choices);
+      const wrap = document.createElement("div");
+      wrap.className = "choices";
+      shuffledChoices.forEach((c, idx) => {
+        const label = document.createElement("label");
+        label.className = "choice";
+        const input = document.createElement("input");
+        input.type = "radio"; input.name = `q_${q.id}`; input.value = c.k;
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(`${idx+1}. ${c.v}`));
+        wrap.appendChild(label);
+      });
+      box.appendChild(wrap);
+
+      const exp = document.createElement("div");
+      exp.className = "explain hidden";
+      exp.innerHTML = `<b>해설</b><br>${q.explanation}`;
+      box.appendChild(exp);
+
+      QUIZ.appendChild(box);
+    }
+  }
+
+  function grade(){
+    const items = state.items.filter(q => !state.correctSet.has(q.id));
+    let anyAnswered = false;
+    for(const q of items){
+      const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
+      const choiceLabels = Array.from(document.querySelectorAll(`input[name="q_${q.id}"]`)).map(i=>i.parentElement);
+
+      // clear indicators
+      choiceLabels.forEach(l => { l.classList.remove("correct","incorrect"); });
+
+      if(!selected){
+        continue;
+      }
+      anyAnswered = true;
+
+      const ok = selected.value === q.answerKey;
+      // mark
+      for(const r of document.querySelectorAll(`input[name="q_${q.id}"]`)){
+        const lbl = r.parentElement;
+        if(r.value === q.answerKey) lbl.classList.add("correct");
+        else if(r.checked) lbl.classList.add("incorrect");
+      }
+      // show explanation
+      const exp = choiceLabels[0].parentElement.querySelector(".explain");
+    //   console.log(exp);
+    //    exp.classList.contains('hidden')? exp.classList.remove("hidden"):'';
+
+      if(ok){
+        state.correctSet.add(q.id); // skip next round
+      }
+    }
+    state.attempt++;
+    // re-render only incorrect remain (and shuffle their options)
+    render();
+
+    exp.forEach(e=>{
+      e.addEventListener('click',()=>{
+        alert('!!');
+      })
+    })
+    if(!anyAnswered){
+      alert("선택한 보기가 없습니다. 각 문항에서 보기를 선택한 뒤 채점하세요.");
+    }
+  }
+
+  function resetAll(){
+    state.correctSet.clear();
+    state.attempt = 0;
+    document.querySelectorAll(".explain").forEach(e=>e.classList.add("hidden"));
+    render();
+  }
+
+  function reshuffle(){
+    render(); // render()가 항상 보기 순서를 다시 섞음
+  }
+
+  async function init(){
+    statusEl.textContent = "문제 세트 로드 중…";
+    const res = await fetch(JSON_FILE);
+    if(!res.ok){ statusEl.textContent = "JSON 로드 실패"; return; }
+    const data = await res.json();
+    // 첫 10문제만 사용 (파일에 더 많아도 slices)
+    const slice = data.questions
+
+    // console.log( data.questions);
+    state.items = slice.map((q, idx) => ({
+      id: q.id, no: idx+1, question: q.question,
+      choices: q.choices, answerKey: q.answerKey,
+      explanation: q.explanation, topic: q.topic
+    }));
+    statusEl.textContent = `총 ${state.items.length}문제 로드 완료`;
+    render();
+
+    const exp = document.querySelectorAll('.exp');
+
+    exp.forEach(e=>{
+      e.addEventListener('click',()=>{
+        let onon = e.parentElement.parentElement;
+
+        onon.querySelector('.explain').classList.contains('hidden')?onon.querySelector('.explain').classList.remove('hidden'):onon.querySelector('.explain').className += ' hidden';
+      })
+    })
+  }
+
+  document.getElementById("checkBtn").addEventListener("click", grade);
+  document.getElementById("resetBtn").addEventListener("click", resetAll);
+  document.getElementById("reshuffleBtn").addEventListener("click", reshuffle);
+  
+  init();
+})();
+</script>
+</body>
+</html>

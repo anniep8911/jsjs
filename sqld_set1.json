@@ -1,0 +1,136 @@
+{
+  "setName": "SQLD 연습 세트 1 (10문항)",
+  "version": "2025-10-28",
+  "questions": [
+    {
+      "id": "Q01",
+      "topic": "윈도우함수/TOP-N",
+      "question": "각 카테고리(cat)별로 매출이 높은 상위 1개 상품을 구하려면 가장 적절한 방법은?",
+      "choices": [
+        {"k":"A","v":"GROUP BY cat, 상품 ORDER BY 매출 DESC LIMIT 1"},
+        {"k":"B","v":"ROW_NUMBER() OVER(PARTITION BY cat ORDER BY 매출 DESC)=1 조건으로 필터"},
+        {"k":"C","v":"MAX(매출)로 GROUP BY cat만 계산 후 원본과 NATURAL JOIN"},
+        {"k":"D","v":"DISTINCT cat, 상품 WHERE 매출 = (SELECT MAX(매출) FROM ...)"}
+      ],
+      "answerKey": "B",
+      "explanation": "카테고리별 상위 N을 구하는 표준 접근은 윈도우 함수(ROW_NUMBER/RANK/DENSE_RANK) + PARTITION BY 입니다. 서브쿼리 MAX 조합은 동일 매출 동점 처리나 성능·가독성 측면에서 비권장."
+    },
+    {
+      "id": "Q02",
+      "topic": "PIVOT/UNPIVOT",
+      "question": "월별 합계(월=컬럼, 합계=셀)로 넓게(PIVOT) 펼친 표를 다시 세로(Long) 형태로 바꾸려면?",
+      "choices": [
+        {"k":"A","v":"UNION ALL"},
+        {"k":"B","v":"UNPIVOT으로 월 컬럼들을 (key,value) 쌍으로 변환"},
+        {"k":"C","v":"CUBE/ROLLUP"},
+        {"k":"D","v":"LISTAGG"}
+      ],
+      "answerKey": "B",
+      "explanation": "가로 확장된 교차표를 세로 형태로 되돌리는 연산은 UNPIVOT입니다. 반대로 세로→가로는 PIVOT."
+    },
+    {
+      "id": "Q03",
+      "topic": "REGEXP",
+      "question": "전화번호 형식 '010-1234-5678' 여부를 검사하는 가장 알맞은 함수는?",
+      "choices": [
+        {"k":"A","v":"LIKE '010-____-____'"},
+        {"k":"B","v":"REGEXP_LIKE(col, '^010-\\d{4}-\\d{4}$')"},
+        {"k":"C","v":"INSTR(col, '010-') = 1"},
+        {"k":"D","v":"REGEXP_REPLACE(col, '-', '')"}
+      ],
+      "answerKey": "B",
+      "explanation": "패턴 일치를 검증할 때는 REGEXP_LIKE가 적합합니다. ^, $, \\d{4} 등 정규표현식 앵커/수량자를 사용."
+    },
+    {
+      "id": "Q04",
+      "topic": "그룹함수/HAVING",
+      "question": "부서별 매출 합계가 1억 이상인 부서만 조회하는 올바른 구문은?",
+      "choices": [
+        {"k":"A","v":"WHERE SUM(sales) >= 100000000 GROUP BY dept"},
+        {"k":"B","v":"GROUP BY dept WHERE SUM(sales) >= 100000000"},
+        {"k":"C","v":"GROUP BY dept HAVING SUM(sales) >= 100000000"},
+        {"k":"D","v":"HAVING SUM(sales) >= 100000000 GROUP BY dept"}
+      ],
+      "answerKey": "C",
+      "explanation": "집계 결과에 대한 조건은 HAVING에서 필터링합니다(집계 이전 조건은 WHERE)."
+    },
+    {
+      "id": "Q05",
+      "topic": "JOIN",
+      "question": "A 테이블에는 모든 상품, B 테이블에는 일부 상품의 프로모션 정보가 있을 때 모든 상품을 유지하며 프로모션을 매칭하려면?",
+      "choices": [
+        {"k":"A","v":"INNER JOIN"},
+        {"k":"B","v":"LEFT OUTER JOIN"},
+        {"k":"C","v":"RIGHT OUTER JOIN"},
+        {"k":"D","v":"FULL OUTER JOIN"}
+      ],
+      "answerKey": "B",
+      "explanation": "모든 상품(A)을 유지해야 하므로 A 기준 LEFT OUTER JOIN."
+    },
+    {
+      "id": "Q06",
+      "topic": "NULL 처리",
+      "question": "합계 계산에서 NULL을 0으로 간주하려면 가장 간결한 표현은?",
+      "choices": [
+        {"k":"A","v":"CASE WHEN col IS NULL THEN 0 ELSE col END"},
+        {"k":"B","v":"NVL(col,0) 또는 COALESCE(col,0)"},
+        {"k":"C","v":"DECODE(col,NULL,0,col)"},
+        {"k":"D","v":"ABS(col)"}
+      ],
+      "answerKey": "B",
+      "explanation": "표준성은 COALESCE, 오라클 전용은 NVL이 대표적."
+    },
+    {
+      "id": "Q07",
+      "topic": "윈도우함수",
+      "question": "주차별 누적 매출을 구하는 가장 적절한 윈도우 프레임은?",
+      "choices": [
+        {"k":"A","v":"SUM(sales) OVER(ORDER BY week ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"},
+        {"k":"B","v":"SUM(sales) OVER(PARTITION BY week)"},
+        {"k":"C","v":"SUM(sales) OVER()"},
+        {"k":"D","v":"SUM(sales) OVER(ORDER BY week ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)"}
+      ],
+      "answerKey": "A",
+      "explanation": "누적합은 시작행~현재행 범위를 지정하는 윈도우 프레임을 사용."
+    },
+    {
+      "id": "Q08",
+      "topic": "모델링/정규화",
+      "question": "제3정규형(3NF)의 정의에 가장 부합하는 것은?",
+      "choices": [
+        {"k":"A","v":"모든 속성이 기본키에 완전 함수 종속이며, 이행적 종속이 없다"},
+        {"k":"B","v":"부분 함수 종속을 허용한다"},
+        {"k":"C","v":"반정규화된 구조를 의미한다"},
+        {"k":"D","v":"기본키가 두 개 이상일 때만 적용된다"}
+      ],
+      "answerKey": "A",
+      "explanation": "3NF: 모든 비키 속성이 기본키에 완전 함수 종속, 비키 속성 간 이행 종속 제거."
+    },
+    {
+      "id": "Q09",
+      "topic": "인덱스/성능",
+      "question": "복합 인덱스 IDX(col1,col2)가 있을 때 다음 중 일반적으로 가장 유리한 조건절은?",
+      "choices": [
+        {"k":"A","v":"WHERE col2 = ?"},
+        {"k":"B","v":"WHERE col1 = ? AND col2 = ?"},
+        {"k":"C","v":"WHERE col2 BETWEEN ? AND ?"},
+        {"k":"D","v":"WHERE col1 LIKE '%값%'"}
+      ],
+      "answerKey": "B",
+      "explanation": "리딩 컬럼(col1)을 활용하고 후속 컬럼과 결합할 때 인덱스 활용도가 높음."
+    },
+    {
+      "id": "Q10",
+      "topic": "집계 + 조건",
+      "question": "카테고리별로 상품 수가 가장 많은 카테고리를 1개만 출력하려면?",
+      "choices": [
+        {"k":"A","v":"COUNT(*) DESC로 정렬 후 FETCH FIRST 1 ROW ONLY"},
+        {"k":"B","v":"MAX(COUNT(*))"},
+        {"k":"C","v":"GROUP BY 없이 COUNT(*)"},
+        {"k":"D","v":"HAVING COUNT(*) = 1"}
+      ],
+      "answerKey": "A",
+      "explanation": "집계 후 정렬→상위 1개 제한(FETCH FIRST 1 ROW / LIMIT) 또는 윈도 함수로 1개 필터."
+    }
+  ]
+}
